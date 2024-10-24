@@ -4,6 +4,7 @@ import com.dws.challenge.Request.TransferRequest;
 import com.dws.challenge.domain.Account;
 import com.dws.challenge.exception.DuplicateAccountIdException;
 import com.dws.challenge.service.AccountsService;
+import com.dws.challenge.service.NotificationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,9 +26,12 @@ public class AccountsController {
 
   private final AccountsService accountsService;
 
+  private final NotificationService notificationService;
+
   @Autowired
-  public AccountsController(AccountsService accountsService) {
+  public AccountsController(AccountsService accountsService, NotificationService notificationService) {
     this.accountsService = accountsService;
+    this.notificationService = notificationService;
   }
 
   @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -62,6 +66,8 @@ public class AccountsController {
     // Call the transfer method
     try {
       accountsService.transfer(fromAccount, toAccount, transferRequest.getAmount());
+      notificationService.notifyAboutTransfer(fromAccount, String.valueOf(transferRequest.getAmount()));
+      notificationService.notifyAboutTransfer(toAccount, String.valueOf(transferRequest.getAmount()));
       return ResponseEntity.ok("Transfer successful.");
     } catch (Exception e) {
       // Catch any transfer-related exceptions
